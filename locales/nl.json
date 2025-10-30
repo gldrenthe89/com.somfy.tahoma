@@ -2,7 +2,7 @@
 	"settings": {
 		"title": "TaHoma instellingen",
 		"intro": "Om TaHoma aan te sturen vanuit Homey, moet Homey toestemming krijgen middels een gebruikersnaam en wachtwoord.",
-		"logintitle": "TaHoma login gegevens",
+		"logintitle": "TaHoma Cloud login gegevens",
 		"username": "Gebruikersnaam",
 		"password": "Wachtwoord",
 		"save": "Login gegevens opslaan",
@@ -13,9 +13,17 @@
 		"logout_success": "Succesvol uitgelogd.",
 		"logout_failure": "Uitloggen niet gelukt.",
 		"preferences": "Voorkeuren",
+		"connection_mode": "Verbindingsmodus",
+		"connection_mode_cloud": "Cloud API (via internet)",
+		"connection_mode_local": "Lokale API (direct verbinding)",
+		"local_host": "TaHoma IP-adres",
+		"local_host_hint": "Bijv. 192.168.1.100:8443 of gateway-1234-5678-9012.local:8443",
+		"local_token": "Developer Mode Token",
+		"local_token_hint": "Genereer een token in de TaHoma app onder Help & geavanceerde functies → Geavanceerde functies → Developer Mode",
 		"sync_speed": "Synchronisatie snelheid",
 		"sync_tooltip": "(seconden)",
-		"save_preferences": "Voorkeuren opslaan"
+		"save_preferences": "Voorkeuren opslaan",
+		"preferences_saved": "Voorkeuren succesvol opgeslagen."
 	},
   "errors": {
     "on_pair_login_failure": "Inloggen niet gelukt. Ga a.u.b. naar het instellingen scherm en geef Homey toegang tot TaHoma."

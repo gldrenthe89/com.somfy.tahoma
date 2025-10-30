@@ -18,15 +18,28 @@
 				var passwordEl = $('#password');
 				var syncSpeedEl = $('#sync_speed');
 				var logoutEl = $('#logoutElement');
+				var connectionModeEl = $('#connection_mode');
+				var localApiFieldsEl = $('#local_api_fields');
+				var cloudApiFieldsEl = $('#cloud_api_fields');
+				var localHostEl = $('#local_host');
+				var localTokenEl = $('#local_token');
 				var hasUsername = false;
 				var hasPassword = false;
 
+				// Load connection mode
+				Homey.get('connectionMode', function(err, mode){
+					if (err) return Homey.alert(err);
+					connectionModeEl.val(mode || 'cloud');
+					toggleConnectionFields();
+				});
+
+				// Load cloud credentials
 				Homey.get('username', function(err, username){
 					if (err) return Homey.alert(err);
 
 					console.log('username: ', username);
 					usernameEl.val(username);
-					if (username.length > 0) {
+					if (username && username.length > 0) {
 						logoutEl.show();
 					}
 				});
@@ -36,14 +49,49 @@
 
 					console.log('password: ', password);
 					passwordEl.val(password);
-					if (password.length > 0) {
+					if (password && password.length > 0) {
 						logoutEl.show();
 					}
+				});
+
+				// Load local API settings
+				Homey.get('localHost', function(err, host){
+					if (err) return Homey.alert(err);
+					localHostEl.val(host || '');
+				});
+
+				Homey.get('localToken', function(err, token){
+					if (err) return Homey.alert(err);
+					localTokenEl.val(token || '');
 				});
 
 				Homey.get('syncInterval', function(err, interval){
 					if (err) return Homey.alert(err);
 					syncSpeedEl.val(interval);
+				});
+
+				// Toggle fields based on connection mode
+				function toggleConnectionFields() {
+					var mode = connectionModeEl.val();
+					if (mode === 'local') {
+						localApiFieldsEl.show();
+						cloudApiFieldsEl.hide();
+						logoutEl.hide();
+					} else {
+						localApiFieldsEl.hide();
+						cloudApiFieldsEl.show();
+						// Show logout if credentials exist
+						if (usernameEl.val() && usernameEl.val().length > 0) {
+							logoutEl.show();
+						}
+					}
+				}
+
+				connectionModeEl.on('change', function() {
+					Homey.set('connectionMode', connectionModeEl.val(), function(err) {
+						if (err) return Homey.alert(err);
+						toggleConnectionFields();
+					});
 				});
 
 				saveButton.on('click', function() {
@@ -87,9 +135,30 @@
 				});
 
 				preferencesButton.on('click', function() {
+					var mode = connectionModeEl.val();
+
+					// Save connection mode
+					Homey.set('connectionMode', mode, function(err) {
+						if (err) return Homey.alert(err);
+					});
+
+					// Save local API settings if in local mode
+					if (mode === 'local') {
+						Homey.set('localHost', localHostEl.val(), function(err) {
+							if (err) return Homey.alert(err);
+						});
+						Homey.set('localToken', localTokenEl.val(), function(err) {
+							if (err) return Homey.alert(err);
+						});
+					}
+
+					// Save sync interval
 					Homey.set('syncInterval', syncSpeedEl.val(), function(err) {
 						if (err) return Homey.alert(err);
 					});
+
+					response.css({color: 'green'});
+					response.html(__('settings.preferences_saved'));
 				});
 			}
 		</script>
@@ -100,35 +169,57 @@
 
 		<p id="response"></p>
 
-		<fieldset>
-			<legend data-i18n="settings.logintitle"></legend>
-			<span id="response"></span>
-      <div class="field row">
-          <label for="username" data-i18n="settings.username"></label>
-          <input id="username" type="text" value=""/>
-      </div>
-      <div class="field row">
-          <label for="password" data-i18n="settings.password"></label>
-          <input id="password" type="password" value=""/>
-      </div>
-
-      <button id="saveButton" class="left" style="display:block" data-i18n="settings.save" ></button>
-    </fieldset>
-
-    <fieldset id="logoutElement" style="display: none;">
-    	<legend data-i18n="settings.logouttitle"></legend>
-    	<button id="logoutButton" class="left" style="display:block" data-i18n="settings.logout" ></button>
-    </fieldset>
-
 		<fieldset id="preferences">
 			<legend data-i18n="settings.preferences"></legend>
+
 			<div class="field row">
-					<label for="sync_speed" data-i18n="settings.sync_speed"></label>
-					<input id="sync_speed" type="text" value=""/>
-					&nbsp;<span data-i18n="settings.sync_tooltip"></span>
+				<label for="connection_mode" data-i18n="settings.connection_mode"></label>
+				<select id="connection_mode">
+					<option value="cloud" data-i18n="settings.connection_mode_cloud">Cloud API</option>
+					<option value="local" data-i18n="settings.connection_mode_local">Local API</option>
+				</select>
+			</div>
+
+			<div id="local_api_fields" style="display: none;">
+				<div class="field row">
+					<label for="local_host" data-i18n="settings.local_host"></label>
+					<input id="local_host" type="text" placeholder="192.168.1.100:8443" value=""/>
+					<br/><small data-i18n="settings.local_host_hint"></small>
+				</div>
+				<div class="field row">
+					<label for="local_token" data-i18n="settings.local_token"></label>
+					<input id="local_token" type="password" value=""/>
+					<br/><small data-i18n="settings.local_token_hint"></small>
+				</div>
+			</div>
+
+			<div class="field row">
+				<label for="sync_speed" data-i18n="settings.sync_speed"></label>
+				<input id="sync_speed" type="text" value=""/>
+				&nbsp;<span data-i18n="settings.sync_tooltip"></span>
 			</div>
 
 			<button id="savePreferencesButton" class="left" style="display:block" data-i18n="settings.save_preferences" ></button>
+		</fieldset>
+
+		<fieldset id="cloud_api_fields">
+			<legend data-i18n="settings.logintitle"></legend>
+			<span id="cloud_response"></span>
+			<div class="field row">
+				<label for="username" data-i18n="settings.username"></label>
+				<input id="username" type="text" value=""/>
+			</div>
+			<div class="field row">
+				<label for="password" data-i18n="settings.password"></label>
+				<input id="password" type="password" value=""/>
+			</div>
+
+			<button id="saveButton" class="left" style="display:block" data-i18n="settings.save" ></button>
+		</fieldset>
+
+		<fieldset id="logoutElement" style="display: none;">
+			<legend data-i18n="settings.logouttitle"></legend>
+			<button id="logoutButton" class="left" style="display:block" data-i18n="settings.logout" ></button>
 		</fieldset>
 	</body>
 </html>
